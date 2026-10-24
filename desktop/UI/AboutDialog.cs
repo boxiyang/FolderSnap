@@ -87,17 +87,37 @@ namespace FolderSnapDesktop.UI
 
             // 4. 作者与版权
             Label lblAuthor = new Label();
-            lblAuthor.Text = "作者: boxi  •  Copyright © 2026 boxi. All Rights Reserved.";
+            lblAuthor.Text = "作者: boxiyang  •  Copyright © 2026 boxiyang. MIT License.";
             lblAuthor.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular);
             lblAuthor.ForeColor = Color.FromArgb(113, 113, 122);
             lblAuthor.TextAlign = ContentAlignment.MiddleCenter;
-            lblAuthor.Location = new Point(0, 150);
-            lblAuthor.Size = new Size(this.ClientSize.Width, 22);
+            lblAuthor.Location = new Point(0, 148);
+            lblAuthor.Size = new Size(this.ClientSize.Width, 20);
+
+            // 4.1 GitHub 链接
+            LinkLabel lnkGithub = new LinkLabel();
+            lnkGithub.Text = "GitHub: https://github.com/boxiyang/FolderSnap";
+            lnkGithub.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular);
+            lnkGithub.LinkColor = Color.FromArgb(37, 99, 235);
+            lnkGithub.ActiveLinkColor = Color.FromArgb(29, 78, 216);
+            lnkGithub.VisitedLinkColor = Color.FromArgb(37, 99, 235);
+            lnkGithub.TextAlign = ContentAlignment.MiddleCenter;
+            lnkGithub.Location = new Point(0, 168);
+            lnkGithub.Size = new Size(this.ClientSize.Width, 20);
+            lnkGithub.Cursor = Cursors.Hand;
+            lnkGithub.LinkClicked += (s, e) =>
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start("https://github.com/boxiyang/FolderSnap");
+                }
+                catch { }
+            };
 
             // 5. 功能介绍特性卡片 (Feature Card)
             Panel featureCard = new Panel();
-            featureCard.Location = new Point(24, 182);
-            featureCard.Size = new Size(this.ClientSize.Width - 48, 210);
+            featureCard.Location = new Point(24, 196);
+            featureCard.Size = new Size(this.ClientSize.Width - 48, 198);
             featureCard.BackColor = Color.FromArgb(248, 250, 252);
             featureCard.Padding = new Padding(18, 12, 18, 12);
             featureCard.Paint += (s, e) =>
@@ -161,6 +181,7 @@ namespace FolderSnapDesktop.UI
             contentPanel.Controls.Add(lblTitle);
             contentPanel.Controls.Add(lblVersion);
             contentPanel.Controls.Add(lblAuthor);
+            contentPanel.Controls.Add(lnkGithub);
             contentPanel.Controls.Add(featureCard);
             contentPanel.Controls.Add(btnClose);
 

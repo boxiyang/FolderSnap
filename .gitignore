@@ -1,0 +1,18 @@
+node_modules/
+.DS_Store
+Thumbs.db
+
+# 本地归档 / 调试产物（不进入仓库）
+.local-archive/
+_FolderSnap_Screenshots/
+scratch_*.png
+*.log
+test_*.exe
+verify_*.exe
+
+# 构建产物：通过 GitHub Releases 分发，不入库
+desktop/FolderSnapDesktop.exe
+
+# 仅本地使用的推广文案，不同步到远程
+docs/SOCIAL_POSTS.md
+docs/LAUNCH_MAP.md

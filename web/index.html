@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FolderSnap - 文件夹遍历与批量文件列表截图神器</title>
+  <meta name="description" content="纯前端应用，支持递归遍历文件夹所有子目录，优雅生成精致 macOS 风格卡片截图并支持批量 ZIP 打包导出。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- 顶部导航栏与品牌区 -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon">📸</div>
+        <div class="brand-text">
+          <h1>
+            FolderSnap
+            <span class="brand-badge">PRO v1.0</span>
+          </h1>
+          <p class="brand-desc">深度遍历文件夹各子目录 · 精致 macOS 风格卡片 · 批量截图导出</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- 隐藏的传统文件输入组件 (兼容性回退) -->
+        <input type="file" id="input-folder-fallback" webkitdirectory directory multiple style="display: none;">
+
+        <!-- 读取模式切换 -->
+        <div class="picker-mode-selector" title="极速模式：秒级即时弹出；句柄模式：现代 File System API">
+          <select id="select-picker-mode" class="select-input" style="padding: 9px 12px; font-weight: 500; background: rgba(0,0,0,0.45); border-color: rgba(255,255,255,0.18);">
+            <option value="fast" selected>⚡ 极速选择 (秒级弹出)</option>
+            <option value="handle">🚀 原生句柄模式</option>
+          </select>
+        </div>
+
+        <button id="btn-select-folder" class="btn btn-primary" title="快捷键: Ctrl/Cmd + O">
+          <span class="btn-icon">📂</span>
+          <span class="btn-text">选择文件夹</span>
+        </button>
+
+        <button id="btn-export-zip" class="btn btn-accent" disabled>
+          <span>📦</span>
+          <span>批量打包截图 (ZIP)</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 统计指标看板 (初始扫描后展示) -->
+    <section id="stats-banner" class="stats-banner" style="display: none;">
+      <div class="stat-item">
+        <div class="stat-icon folders">📁</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-folders">0</div>
+          <div class="stat-label">已遍历子文件夹</div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon files">📄</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-files">0</div>
+          <div class="stat-label">包含文件总数</div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon size">💾</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-size">0 B</div>
+          <div class="stat-label">目录总占用大小</div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon scope">📍</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-root" style="font-size: 1.1rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 220px;">-</div>
+          <div class="stat-label">根文件夹名称</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 顶部过滤、排序与视图切换控制条 -->
+    <section id="control-bar" class="control-bar" style="display: none;">
+      <div class="control-group-left">
+        <!-- 视图切换 -->
+        <div class="view-switch">
+          <button id="view-btn-cards" class="view-btn active">
+            <span>🗂</span>
+            <span>分文件夹卡片</span>
+          </button>
+          <button id="view-btn-panorama" class="view-btn">
+            <span>🗺</span>
+            <span>全景大长图</span>
+          </button>
+        </div>
+
+        <!-- 智能过滤开关 -->
+        <label class="switch-label" title="自动忽略 .git, node_modules, dist, .DS_Store 等开发及临时目录">
+          <input type="checkbox" id="switch-noise" class="switch-input" checked>
+          <span class="switch-slider"></span>
+          <span>过滤系统与依赖文件</span>
+        </label>
+      </div>
+
+      <div class="control-group-right">
+        <!-- 实时搜索输入框 -->
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="input-search" class="search-input" placeholder="筛选目录或文件名...">
+        </div>
+
+        <!-- 排序方式 -->
+        <select id="select-sort" class="select-input">
+          <option value="name">按路径名称排序</option>
+          <option value="files">按文件数量排序</option>
+          <option value="size">按占用大小排序</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- 空状态与拖拽引导区域 -->
+    <section id="dropzone-empty" class="dropzone-empty">
+      <div class="empty-icon-box">📁</div>
+      <div class="empty-title">点击或拖拽文件夹到此处</div>
+      <p class="empty-hint">
+        支持自动深度递归遍历各层子文件夹，提取文件列表并生成高分辨率 macOS 窗口毛玻璃风格卡片截图。
+      </p>
+      <div class="empty-features">
+        <span class="feature-pill">⚡ 纯前端离线运行 · 数据不离设备</span>
+        <span class="feature-pill">🎨 2x 超清 Retina 截图</span>
+        <span class="feature-pill">📦 一键打包全部截图为 ZIP</span>
+        <span class="feature-pill">📋 单击卡片直接复制图片</span>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
+        <button id="btn-select-folder-secondary" class="btn btn-primary">
+          <span>📂</span>
+          <span>立即选择本地文件夹</span>
+        </button>
+        <button id="btn-load-demo" class="btn" style="background: rgba(255, 255, 255, 0.08);">
+          <span>✨</span>
+          <span>加载演示示例数据</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 核心展示区域 -->
+    <main id="content-area" class="content-area" style="display: none;">
+      <div id="cards-grid" class="cards-grid">
+        <!-- 动态注入的各文件夹卡片 -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- 离屏高清捕获容器 -->
+  <div id="offscreen-capture-host"></div>
+
+  <!-- 进度模态框 -->
+  <div id="progress-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="progress-spinner"></div>
+      <h3 id="modal-title" class="modal-title">正在处理中...</h3>
+      <p id="modal-desc" class="modal-desc">请稍候</p>
+      <div class="modal-progress-bar">
+        <div id="modal-progress-fill" class="modal-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 浮动通知容器 -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- 本地打包依赖库 (离线运行无阻) -->
+  <script src="libs/html2canvas.min.js"></script>
+  <script src="libs/jszip.min.js"></script>
+
+  <!-- 核心应用业务逻辑 -->
+  <script src="js/scanner.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/exporter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
